@@ -1,0 +1,85 @@
+=== CAMBIOS PARA src/components/VenueSheet.tsx ===
+
+1. MODIFICAR IMPORTS (línea 4):
+--------------------------------------------
+BUSCAR:
+import { X, Star, DollarSign, MapPin, Globe, Image, ExternalLink, Bookmark, Navigation } from 'lucide-react'
+
+REEMPLAZAR POR:
+import { X, Star, DollarSign, MapPin, Globe, Image, ExternalLink, Bookmark, Navigation, Share2 } from 'lucide-react'
+
+
+2. AÑADIR IMPORTS (después de la línea 11):
+--------------------------------------------
+import { shareVenue } from '@/lib/share'
+import { addPoints, PointAction } from '@/lib/points-system'
+
+
+3. AÑADIR ESTADO (buscar "const [isSaving, setIsSaving]" y DESPUÉS añadir):
+--------------------------------------------
+const [isSharing, setIsSharing] = useState(false)
+
+
+4. AÑADIR FUNCIÓN handleShareVenue (después de la función handleSaveVenue, ANTES de handleOpenNavigation):
+--------------------------------------------
+const handleShareVenue = async () => {
+  setIsSharing(true)
+  try {
+    const shared = await shareVenue({
+      venueName: venue.name,
+      venueType: venue.type || undefined,
+      address: venue.address || undefined
+    })
+    
+    if (shared) {
+      toast.success(t('venue.shared'))
+      
+      // Añadir puntos
+      if (userId) {
+        try {
+          await addPoints(userId, PointAction.VENUE_SHARED)
+          toast.success('¡+5 puntos! ⭐')
+        } catch (error) {
+          console.error('Error adding points:', error)
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error sharing venue:', error)
+  } finally {
+    setIsSharing(false)
+  }
+}
+
+
+5. MODIFICAR handleSaveVenue (buscar "toast.success('¡Guardado en favoritos!')" y DESPUÉS añadir):
+--------------------------------------------
+      
+      // Añadir puntos
+      if (userId) {
+        try {
+          await addPoints(userId, PointAction.VENUE_SAVED)
+          toast.success('¡+5 puntos! ⭐')
+        } catch (error) {
+          console.error('Error adding points:', error)
+        }
+      }
+
+
+6. AÑADIR BOTÓN COMPARTIR (buscar el botón de Bookmark y DESPUÉS añadir):
+--------------------------------------------
+            
+            {/* Botón de compartir */}
+            <button
+              onClick={handleShareVenue}
+              disabled={isSharing}
+              className="py-3 px-4 rounded-lg transition-colors bg-dark-secondary text-text-light hover:bg-dark-hover flex items-center justify-center disabled:opacity-50"
+            >
+              <Share2 className="w-5 h-5" />
+            </button>
+
+
+=== INSTRUCCIONES ===
+1. Abre: PruebaApp/src/components/VenueSheet.tsx
+2. Aplica los 6 cambios en orden
+3. Guarda el archivo

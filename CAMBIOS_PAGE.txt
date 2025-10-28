@@ -1,0 +1,26 @@
+=== CAMBIOS PARA src/app/page.tsx ===
+
+1. AÑADIR IMPORT (después de la línea 31):
+--------------------------------------------
+import { addPoints, PointAction } from '@/lib/points-system'
+
+
+2. MODIFICAR handleUseTicket (buscar "setHasUsedTicketToday(true)" y DESPUÉS añadir):
+--------------------------------------------
+      
+      // Añadir puntos al usuario
+      try {
+        const result = await addPoints(user.id, PointAction.TICKET_USED)
+        console.log(`¡Ganaste ${result.pointsAdded} puntos! Total: ${result.newTotal}`)
+      } catch (error) {
+        console.error('Error adding points:', error)
+      }
+
+
+=== INSTRUCCIONES ===
+1. Abre: PruebaApp/src/app/page.tsx
+2. Busca la línea que dice: import { MapPin, Edit, Home as HomeIcon...
+3. DESPUÉS de esa línea, añade el import de arriba
+4. Busca la línea: setHasUsedTicketToday(true)
+5. DESPUÉS de esa línea, añade el código de puntos de arriba
+6. Guarda el archivo
