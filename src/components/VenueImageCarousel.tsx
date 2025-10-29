@@ -35,7 +35,9 @@ export default function VenueImageCarousel({
   const trackItemOffset = itemWidth + GAP;
 
   // Obtener las fotos del venue
-  const photos = venue.photo_refs || (venue.photo_ref ? [venue.photo_ref] : []);
+  const photos = (venue.photo_refs && venue.photo_refs.length > 0) 
+    ? venue.photo_refs 
+    : (venue.photo_ref ? [venue.photo_ref] : []);
   
   // Si no hay fotos, usar imágenes de fallback según el tipo
   const getFallbackImage = () => {

@@ -151,6 +151,21 @@ const Map = forwardRef<any, MapProps>(({ venues, onVenueClick, selectedVenueId, 
                 0 4px 10px rgba(0, 0, 0, 0.4);
             }
           }
+          
+          @keyframes pulseRing {
+            0% { 
+              opacity: .9; 
+              transform: scale(.6); 
+            }
+            70% { 
+              opacity: .1; 
+              transform: scale(1.6); 
+            }
+            100% { 
+              opacity: 0; 
+              transform: scale(2); 
+            }
+          }
         `
         document.head.appendChild(style)
 
@@ -258,46 +273,69 @@ const Map = forwardRef<any, MapProps>(({ venues, onVenueClick, selectedVenueId, 
         // Crear contenedor interno que se escalará
         const innerContainer = document.createElement('div')
         innerContainer.className = 'venue-marker-inner'
-        innerContainer.style.width = '50px'
-        innerContainer.style.height = '65px'
+        innerContainer.style.width = '40px'
+        innerContainer.style.height = '60px'
         innerContainer.style.display = 'flex'
         innerContainer.style.flexDirection = 'column'
         innerContainer.style.alignItems = 'center'
+        innerContainer.style.justifyContent = 'flex-start'
         innerContainer.style.transformOrigin = 'bottom center'
         innerContainer.style.transform = `scale(${scale})`
         innerContainer.style.transition = 'transform 0.3s ease'
         innerContainer.style.willChange = 'transform'
         
-        // Pin con círculo perfecto y triángulo (tamaños fijos)
+        // Pin estilo Google Maps con anillo pulsante
         innerContainer.innerHTML = `
-          <div class="marker-circle" style="
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: ${color};
-            border: 3px solid rgba(255, 255, 255, 0.4);
-            box-shadow: 
-              0 0 20px ${glowColor},
-              0 0 40px ${glowColor},
-              inset 0 0 10px rgba(255, 255, 255, 0.2);
+          <div class="marker-live" style="
+            position: relative;
+            width: 40px;
+            height: 60px;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
-            font-size: 20px;
-            font-weight: bold;
-            color: white;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
-            transition: border-width 0.2s ease;
-          "></div>
-          <div class="marker-triangle" style="
-            width: 0;
-            height: 0;
-            border-left: 10px solid transparent;
-            border-right: 10px solid transparent;
-            border-top: 15px solid ${color};
-            filter: drop-shadow(0 0 10px ${glowColor});
-            margin-top: -3px;
-          "></div>
+          ">
+            <!-- Anillo pulsante -->
+            <div class="ring" style="
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 40px;
+              height: 40px;
+              border-radius: 50% 50% 50% 0;
+              border: 2px solid ${color};
+              animation: pulseRing 2s infinite ease-out;
+              transform-origin: center;
+              transform: rotate(-45deg);
+            "></div>
+            
+            <!-- Pin principal (forma de gota) -->
+            <div class="marker-pin" style="
+              width: 40px;
+              height: 40px;
+              background: ${color};
+              border-radius: 50% 50% 50% 0;
+              transform: rotate(-45deg);
+              border: 3px solid rgba(255, 255, 255, 0.9);
+              box-shadow: 
+                0 0 15px ${glowColor},
+                0 0 30px ${glowColor},
+                0 4px 8px rgba(0, 0, 0, 0.3);
+              position: relative;
+              z-index: 2;
+            ">
+              <!-- Número dentro del pin -->
+              <div style="
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) rotate(45deg);
+                font-size: 16px;
+                font-weight: bold;
+                color: white;
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+              ">${count > 0 ? count : ''}</div>
+            </div>
+          </div>
         `
         
         el.appendChild(innerContainer)

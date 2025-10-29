@@ -6,6 +6,7 @@ import { MapPin, ExternalLink, Ticket, Users, Clock } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger, withErrorHandling } from '@/lib/logger'
 import { useToastContext } from '@/contexts/ToastContext'
+import { useTicket } from '@/lib/api'
 
 interface VenueCardProps {
   venue: VenueWithCount
@@ -41,23 +42,28 @@ export default function VenueCard({
       async () => {
         const { data: { session } } = await supabase.auth.getSession()
         
-        const response = await fetch('/api/ticket', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session?.access_token}`
-          },
-          body: JSON.stringify({ venueId: venue.id })
-        })
+        if (!session?.user?.id) {
+          throw new Error('Usuario no autenticado')
+        }
 
-        const data = await response.json()
+        const ticketResult = await useTicket(session.user.id, venue.id)
 
-        if (response.ok) {
+        if (ticketResult) {
           return 'success'
-        } else if (response.status === 409) {
-          return 'already_used'
         } else {
-          throw new Error(data.error || 'Error al usar el ticket')
+          // Si falla, verificar si ya usó el ticket hoy
+          const { data: existingTicket } = await supabase
+            .from('tickets')
+            .select('id')
+            .eq('user_id', session.user.id)
+            .eq('local_date', new Date().toISOString().split('T')[0])
+            .limit(1)
+            .single()
+          
+          if (existingTicket) {
+            return 'already_used'
+          }
+          throw new Error('Error al usar el ticket')
         }
       },
       'Error al usar ticket',
