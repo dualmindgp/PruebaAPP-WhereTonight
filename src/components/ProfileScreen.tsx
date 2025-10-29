@@ -9,9 +9,11 @@ import LanguageSelector from './LanguageSelector'
 import ActivityFeed from './ActivityFeed'
 import AddFriendModal from './AddFriendModal'
 import QRScanner from './QRScanner'
+import PointsBadge from './PointsBadge'
 import { VenueWithCount } from '@/lib/database.types'
 import { logger, withErrorHandling } from '@/lib/logger'
 import { useToastContext } from '@/contexts/ToastContext'
+import { getUserPoints, getLevelFromPoints } from '@/lib/points-system'
 
 interface ProfileScreenProps {
   user: User
@@ -32,17 +34,29 @@ export default function ProfileScreen({
   const toast = useToastContext()
   const [showAddFriendModal, setShowAddFriendModal] = useState(false)
   const [showQRScanner, setShowQRScanner] = useState(false)
-  
-  // TODO: Fetch from user_points table
-  const points = profile?.points || 0
-  const level = profile?.level || 1
   const [avatarUploading, setAvatarUploading] = useState(false)
+  const [points, setPoints] = useState(0)
+  const [level, setLevel] = useState(1)
 
-  const handleQRScan = async (data: string) => {
-    // TODO: Implement QR scan logic
-    logger.info('QR Code scanned', { data, userId: user.id })
-    toast.success('QR escaneado correctamente')
-    setShowQRScanner(false)
+  // Cargar puntos del usuario
+  React.useEffect(() => {
+    const loadPoints = async () => {
+      try {
+        const totalPoints = await getUserPoints(user.id)
+        setPoints(totalPoints)
+        setLevel(getLevelFromPoints(totalPoints))
+      } catch (error) {
+        console.error('Error loading points:', error)
+      }
+    }
+    loadPoints()
+  }, [user.id])
+
+  const handleQRScan = (code: string) => {
+    console.log('QR Code scanned:', code)
+    toast.success(`Código escaneado: ${code}`)
+    // Aquí puedes procesar el código QR
+    // Por ejemplo, añadir amigo si es un código de amistad
   }
   const [showEditBio, setShowEditBio] = useState(false)
   const [editingBio, setEditingBio] = useState(profile?.bio || '')
