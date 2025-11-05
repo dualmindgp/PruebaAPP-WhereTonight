@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { QueryProvider } from "@/components/QueryProvider";
 import { VenueProvider } from "@/contexts/VenueContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ToastProvider } from "@/contexts/ToastContext";
@@ -63,13 +64,15 @@ export default function RootLayout({
         <CapacitorInit />
         <PWARegister />
         <ErrorBoundary>
-          <ToastProvider>
-            <LanguageProvider>
-              <VenueProvider>
-                {children}
-              </VenueProvider>
-            </LanguageProvider>
-          </ToastProvider>
+          <QueryProvider>
+            <ToastProvider>
+              <LanguageProvider>
+                <VenueProvider>
+                  {children}
+                </VenueProvider>
+              </LanguageProvider>
+            </ToastProvider>
+          </QueryProvider>
         </ErrorBoundary>
       </body>
     </html>
