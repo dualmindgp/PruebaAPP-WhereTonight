@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { VenueWithCount } from '@/lib/database.types'
+import { VenueSchema, safeValidateArray } from '@/lib/schemas'
 
 /**
  * Obtiene todos los venues activos con conteo de tickets de hoy
@@ -43,8 +44,17 @@ export async function getVenues(): Promise<VenueWithCount[]> {
       count_today: ticketCounts[venue.id] || 0
     }))
 
+    // Validar datos (sin cambiar el tipo, solo verificar)
+    venuesWithCounts.forEach(venue => {
+      try {
+        VenueSchema.parse(venue)
+      } catch (error) {
+        console.warn('Venue validation warning:', venue.id, error)
+      }
+    })
+
     // Ordenar por popularidad
-    venuesWithCounts.sort((a, b) => b.count_today - a.count_today)
+    venuesWithCounts.sort((a, b) => (b.count_today || 0) - (a.count_today || 0))
 
     return venuesWithCounts
   } catch (error) {

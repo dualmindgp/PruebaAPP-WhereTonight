@@ -1,10 +1,18 @@
 import { supabase } from '@/lib/supabase'
+import { rateLimiter, RateLimitPresets, RateLimitKeys } from '@/lib/rate-limiter'
 
 /**
  * Usa un ticket para un venue específico
  */
 export async function useTicket(userId: string, venueId: string): Promise<boolean> {
   try {
+    // Aplicar rate limiting (1 ticket por día)
+    const rateLimitKey = RateLimitKeys.ticket(userId);
+    if (!rateLimiter.canMakeCall(rateLimitKey, RateLimitPresets.TICKET_DAILY)) {
+      console.warn('Rate limit exceeded for ticket usage:', userId);
+      return false;
+    }
+
     const today = new Date().toISOString().split('T')[0]
 
     const { error } = await supabase

@@ -282,7 +282,11 @@ export default function VenueSheet({
           {/* Photo Carousel */}
           <div className="mb-4">
             <PhotoCarousel 
-              photos={venue.photo_refs || (venue.photo_ref ? [venue.photo_ref] : [])} 
+              photos={
+                (venue.photo_refs && venue.photo_refs.length > 0) 
+                  ? venue.photo_refs 
+                  : (venue.photo_ref ? [venue.photo_ref] : [])
+              } 
               venueName={venue.name}
               venueType={venue.type}
             />
