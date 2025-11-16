@@ -163,12 +163,14 @@ async function seedMissingVenues() {
       let photoRef: string | undefined
       let photoRefs: string[] = []
       if (placeDetails.photos && placeDetails.photos.length > 0) {
-        const firstPhotoName = placeDetails.photos[0].name
-        photoRef = firstPhotoName.split('/').pop()
+        // Guardar el nombre completo para usar con la NEW Places API
+        // Primera foto como principal (nombre completo)
+        photoRef = placeDetails.photos[0].name
         
+        // Todas las fotos (máximo 10) - nombres completos
         photoRefs = placeDetails.photos
           .slice(0, 10)
-          .map((photo: any) => photo.name.split('/').pop())
+          .map((photo: any) => photo.name)
           .filter(Boolean) as string[]
       }
 

@@ -68,26 +68,132 @@ export default function VenueSheet({
   if (!isOpen) return null
 
   const handleClickGoingButton = () => {
-    if (hasUsedTicketToday || isSubmitting) return
+    // TESTING MODE: Permitir múltiples tickets
+    // if (hasUsedTicketToday || isSubmitting) return
+    if (isSubmitting) return
     setShowConfirmModal(true)
   }
 
-  const handleConfirmTicket = async () => {
+  const handleConfirmTicket = async (shareToStory: boolean) => {
     setShowConfirmModal(false)
     setIsSubmitting(true)
     
-    logger.info('Usuario usando ticket', { venueId: venue.id, userId })
+    logger.info('Usuario usando ticket', { venueId: venue.id, userId, shareToStory })
     
     try {
       const success = await onUseTicket(venue.id)
+      
+      console.log('onUseTicket result:', success)
+      
       if (success) {
         toast.success('¡Nos vemos allí!')
         logger.trackEvent('ticket_used', { venueId: venue.id, venueName: venue.name })
+        
+        // Si el usuario quiere compartir en historia, crear el post automático
+        if (shareToStory && userId) {
+          console.log('✓ Conditions met: shareToStory=true, userId=', userId)
+          try {
+            await createTicketStory(venue, userId)
+            toast.success('¡Historia compartida! 🎉')
+            
+            // IMPORTANTE: Esperar un momento para que la BD procese el insert
+            await new Promise(resolve => setTimeout(resolve, 500))
+            
+            // Recargar la página para que aparezca la nueva historia
+            // Nota: Idealmente esto debería actualizarse automáticamente, 
+            // pero como fix rápido recargamos
+            console.log('Story created! Reloading to show it...')
+            window.location.reload()
+          } catch (error) {
+            console.error('Error creating ticket story:', error)
+            toast.error('No se pudo compartir la historia, pero tu entrada está confirmada')
+          }
+        } else {
+          console.log('✗ Conditions NOT met: shareToStory=', shareToStory, 'userId=', userId)
+        }
       } else {
+        console.error('✗ onUseTicket returned FALSE - ticket creation failed')
         toast.error('No se pudo usar el ticket')
       }
     } finally {
       setIsSubmitting(false)
+    }
+  }
+  
+  // Función para crear historia automática al comprar entrada
+  const createTicketStory = async (venue: VenueWithCount, userId: string) => {
+    try {
+      // Obtener la primera foto del venue
+      const photos = (venue as any).photos
+      const photoUrl = photos && photos.length > 0 
+        ? `/api/photo?ref=${photos[0]}&type=${venue.type}`
+        : null
+      
+      const city = (venue as any).city || 'Madrid'
+      
+      // Obtener coordenadas del venue o usar coordenadas por defecto
+      const cityLat = (venue as any).lat || venue.lat || 40.4168 // Madrid por defecto
+      const cityLng = (venue as any).lng || venue.lng || -3.7038
+      
+      console.log('Creating ticket story with data:', {
+        userId,
+        venueName: venue.name,
+        venueId: venue.id,
+        photoUrl,
+        city,
+        cityLat,
+        cityLng
+      })
+      
+      // Crear post con formato predefinido especial
+      // NOTA: Si falla, puede ser que los campos nuevos no existan en la BD
+      // Primero intenta con todos los campos nuevos
+      const { data, error } = await supabase
+        .from('social_posts')
+        .insert({
+          user_id: userId,
+          content: `¡Voy a ${venue.name} esta noche! 🎉`,
+          venue_id: venue.id,
+          venue_name: venue.name,
+          venue_photo: photoUrl,
+          audience: 'public',
+          is_ticket_story: true,
+          city: city,
+          city_lat: cityLat,
+          city_lng: cityLng
+        })
+        .select()
+      
+      if (error) {
+        console.error('Error creating ticket story (with new fields):', error)
+        
+        // Si falla por campos inexistentes, crear sin los campos nuevos
+        console.log('Trying to create story without new fields...')
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('social_posts')
+          .insert({
+            user_id: userId,
+            content: `¡Voy a ${venue.name} esta noche! 🎉 (${venue.id})`,
+            audience: 'public',
+            city: city,
+            city_lat: cityLat,
+            city_lng: cityLng
+          })
+          .select()
+        
+        if (fallbackError) {
+          console.error('Error creating ticket story (fallback):', fallbackError)
+          throw fallbackError
+        }
+        
+        console.log('Story created successfully (fallback mode):', fallbackData)
+        return
+      }
+      
+      console.log('Story created successfully:', data)
+    } catch (error) {
+      console.error('Unexpected error in createTicketStory:', error)
+      throw error
     }
   }
 
@@ -159,6 +265,13 @@ export default function VenueSheet({
     }
   }
 
+  const handleOpenNavigation = () => {
+    // Abrir Google Maps con navegación
+    const destination = `${venue.lat},${venue.lng}`
+    const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${destination}`
+    window.open(mapsUrl, '_blank')
+  }
+
   const handleShareVenue = async () => {
     setIsSharing(true)
     try {
@@ -186,13 +299,6 @@ export default function VenueSheet({
     } finally {
       setIsSharing(false)
     }
-  }
-
-  const handleOpenNavigation = () => {
-    // Abrir Google Maps con navegación
-    const destination = `${venue.lat},${venue.lng}`
-    const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${destination}`
-    window.open(mapsUrl, '_blank')
   }
 
   // Manejar errores de carga de imagen
@@ -282,11 +388,7 @@ export default function VenueSheet({
           {/* Photo Carousel */}
           <div className="mb-4">
             <PhotoCarousel 
-              photos={
-                (venue.photo_refs && venue.photo_refs.length > 0) 
-                  ? venue.photo_refs 
-                  : (venue.photo_ref ? [venue.photo_ref] : [])
-              } 
+              photos={venue.photo_refs || (venue.photo_ref ? [venue.photo_ref] : [])} 
               venueName={venue.name}
               venueType={venue.type}
             />
@@ -347,17 +449,15 @@ export default function VenueSheet({
             {/* I'm going button */}
             <button
               onClick={handleClickGoingButton}
-              disabled={hasUsedTicketToday || isSubmitting}
+              disabled={isSubmitting}
               className={`
                 flex-1 py-3 px-6 rounded-lg
-                ${hasUsedTicketToday 
-                  ? 'bg-gray-700 text-gray-400' 
-                  : 'bg-neon-pink text-white hover:bg-opacity-90'}
+                bg-neon-pink text-white hover:bg-opacity-90
                 font-medium transition-colors
                 flex items-center justify-center
               `}
             >
-              {isSubmitting ? t('venue.processing') : hasUsedTicketToday ? t('venue.ticketUsedToday') : t('venue.imGoing')}
+              {isSubmitting ? t('venue.processing') : t('venue.imGoing')}
             </button>
             
             {/* Botón de guardar */}

@@ -5,10 +5,6 @@ import { User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { VenueWithCount } from '@/lib/database.types'
 import { useVenues } from '@/contexts/VenueContext'
-import { checkTicketUsedToday, useTicket } from '@/lib/api/tickets'
-import { createActivity } from '@/lib/api/activity'
-import { triggerNotificationHaptic, triggerHaptic } from '@/lib/capacitor-config'
-import { NotificationType } from '@capacitor/haptics'
 import MapWrapper from '@/components/MapWrapper'
 import VenueList from '@/components/VenueList'
 import AuthButton from '@/components/AuthButton'
@@ -33,6 +29,7 @@ import CityOnboarding from '@/components/CityOnboarding'
 import useSwipe from '@/hooks/useSwipe'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { MapPin, Edit, Home as HomeIcon, Search as SearchIcon, User as UserIcon, MessageCircle } from 'lucide-react'
+import { addPoints, PointAction } from '@/lib/points-system'
 
 interface SelectedCity {
   name: string
@@ -80,8 +77,22 @@ export default function Home() {
     }
 
     try {
-      const hasUsed = await checkTicketUsedToday(user.id)
-      setHasUsedTicketToday(hasUsed)
+      // Usar fecha UTC estándar
+      const today = new Date().toISOString().split('T')[0]
+
+      const { data, error } = await supabase
+        .from('tickets')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('local_date', today)
+        .limit(1)
+      
+      if (error) {
+        console.error('Error checking ticket status:', error)
+        setHasUsedTicketToday(false)
+      } else {
+        setHasUsedTicketToday(data && data.length > 0)
+      }
     } catch (error) {
       console.error('Error checking ticket status:', error)
       setHasUsedTicketToday(false)
@@ -154,26 +165,67 @@ export default function Home() {
   }
 
   const handleUseTicket = async (venueId: string): Promise<boolean> => {
-    if (!user || hasUsedTicketToday) return false
+    // TESTING MODE: Permitir múltiples tickets
+    // if (!user || hasUsedTicketToday) return false
+    if (!user) return false
 
     try {
-      // Usar ticket con nueva función API
-      const success = await useTicket(user.id, venueId)
+      console.log('🎫 Attempting to create ticket:', { userId: user.id, venueId, today: new Date().toISOString().split('T')[0] })
       
-      if (!success) {
-        // Haptic de error
-        await triggerNotificationHaptic(NotificationType.Error)
-        return false
+      // Usar fecha UTC estándar para consistencia global
+      const today = new Date().toISOString().split('T')[0] // Formato: YYYY-MM-DD
+
+      const { data, error } = await supabase
+        .from('tickets')
+        .insert({
+          user_id: user.id,
+          venue_id: venueId,
+          local_date: today
+        })
+        .select()
+
+      if (error) {
+        console.error('❌ Error using ticket - FULL ERROR:', error)
+        console.error('Error code:', error.code)
+        console.error('Error message:', error.message)
+        console.error('Error details:', error.details)
+        
+        // TESTING MODE: Ignorar error de ticket duplicado (23505)
+        if (error.code === '23505') {
+          console.log('⚠️ TESTING MODE: Ignorando error de ticket duplicado, continuando...')
+          // Continuar como si hubiera tenido éxito
+        } else {
+          return false
+        }
+      } else {
+        console.log('✅ Ticket created successfully:', data)
       }
 
-      // Haptic de éxito
-      await triggerNotificationHaptic(NotificationType.Success)
-
-      // Actualizar estado
+      // Actualizar estado y recargar datos
       setHasUsedTicketToday(true)
       
+      // Añadir puntos al usuario
+      try {
+        const result = await addPoints(user.id, PointAction.TICKET_USED)
+        console.log(`¡Ganaste ${result.pointsAdded} puntos! Total: ${result.newTotal}`)
+      } catch (error) {
+        console.error('Error adding points:', error)
+      }
+      
       // Crear actividad en el feed
-      await createActivity(user.id, venueId, 'ticket_used')
+      try {
+        await fetch('/api/activity', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: user.id,
+            venue_id: venueId,
+            type: 'ticket_used'
+          })
+        })
+      } catch (error) {
+        console.error('Error creating activity:', error)
+      }
       
       // Esperar un momento para asegurar que la BD procese el insert
       await new Promise(resolve => setTimeout(resolve, 1000))

@@ -29,14 +29,28 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Construir URL de Google Places Photo
-    const photoUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${photoRef}&key=${GOOGLE_MAPS_API_KEY}`
+    // Verificar que el photoRef tenga el formato correcto de la NEW Places API
+    if (!photoRef.includes('places/')) {
+      console.warn(`Photo reference in old format: ${photoRef.substring(0, 50)}... - using fallback`)
+      // Usar fallback para referencias en formato antiguo
+      const fallbackUrl = FALLBACK_IMAGES[venueType as keyof typeof FALLBACK_IMAGES] || FALLBACK_IMAGES.other
+      return NextResponse.redirect(fallbackUrl)
+    }
 
-    // Hacer fetch de la imagen
-    const response = await fetch(photoUrl)
+    // Usar la NEW Google Places API (v1) para fotos
+    const photoUrl = `https://places.googleapis.com/v1/${photoRef}/media?maxHeightPx=800&maxWidthPx=800`
+    
+    const response = await fetch(photoUrl, {
+      headers: {
+        'X-Goog-Api-Key': GOOGLE_MAPS_API_KEY
+      }
+    })
 
     if (!response.ok) {
-      throw new Error(`Google API returned ${response.status}`)
+      console.error('Google Places API error:', response.status)
+      // Usar fallback en lugar de devolver error
+      const fallbackUrl = FALLBACK_IMAGES[venueType as keyof typeof FALLBACK_IMAGES] || FALLBACK_IMAGES.other
+      return NextResponse.redirect(fallbackUrl)
     }
 
     // Obtener la imagen como buffer
@@ -46,7 +60,7 @@ export async function GET(request: NextRequest) {
     return new NextResponse(imageBuffer, {
       headers: {
         'Content-Type': response.headers.get('Content-Type') || 'image/jpeg',
-        'Cache-Control': 'public, max-age=86400', // Cache por 24 horas
+        'Cache-Control': 'public, max-age=604800, immutable', // Cache por 7 días
       },
     })
   } catch (error) {
