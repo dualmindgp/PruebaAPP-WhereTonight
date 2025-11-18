@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">WhereTonight</string>
+    <string name="app_name">WhereTonight PRUEBA NUEVA</string>
     <string name="title_activity_main">WhereTonight</string>
     <string name="package_name">com.wheretonight.app</string>
     <string name="custom_url_scheme">com.wheretonight.app</string>

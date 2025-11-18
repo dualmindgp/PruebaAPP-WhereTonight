@@ -284,44 +284,48 @@ const Map = forwardRef<any, MapProps>(({ venues, onVenueClick, selectedVenueId, 
         innerContainer.style.transition = 'transform 0.3s ease'
         innerContainer.style.willChange = 'transform'
         
-        // Pin estilo Google Maps con anillo pulsante
+        // Pin estilo premium con base luminosa y halo suave
         innerContainer.innerHTML = `
           <div class="marker-live" style="
             position: relative;
             width: 40px;
             height: 60px;
             display: flex;
-            align-items: flex-start;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
           ">
-            <!-- Anillo pulsante -->
+            <!-- Halo suave alrededor del pin -->
             <div class="ring" style="
               position: absolute;
-              top: 0;
-              left: 0;
-              width: 40px;
-              height: 40px;
+              top: 2px;
+              left: 50%;
+              width: 34px;
+              height: 34px;
+              transform: translateX(-50%) rotate(-45deg);
               border-radius: 50% 50% 50% 0;
               border: 2px solid ${color};
-              animation: pulseRing 2s infinite ease-out;
+              box-shadow: 0 0 18px ${glowColor};
+              opacity: 0.9;
+              animation: pulseRing 2.2s infinite ease-out;
               transform-origin: center;
-              transform: rotate(-45deg);
             "></div>
-            
-            <!-- Pin principal (forma de gota) -->
+
+            <!-- Pin principal (gota con degradado) -->
             <div class="marker-pin" style="
               width: 40px;
               height: 40px;
-              background: ${color};
+              background: radial-gradient(circle at 30% 20%, ${color} 0%, ${color} 45%, #0a0a0a 100%);
               border-radius: 50% 50% 50% 0;
               transform: rotate(-45deg);
-              border: 3px solid rgba(255, 255, 255, 0.9);
+              border: 2px solid rgba(255, 255, 255, 0.4);
               box-shadow: 
-                0 0 15px ${glowColor},
-                0 0 30px ${glowColor},
-                0 4px 8px rgba(0, 0, 0, 0.3);
+                0 0 18px ${glowColor},
+                0 0 36px ${glowColor},
+                0 6px 14px rgba(0, 0, 0, 0.5);
               position: relative;
               z-index: 2;
+              overflow: hidden;
             ">
               <!-- Número dentro del pin -->
               <div style="
@@ -330,11 +334,28 @@ const Map = forwardRef<any, MapProps>(({ venues, onVenueClick, selectedVenueId, 
                 left: 50%;
                 transform: translate(-50%, -50%) rotate(45deg);
                 font-size: 16px;
-                font-weight: bold;
-                color: white;
-                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+                font-weight: 800;
+                letter-spacing: 0.03em;
+                color: #ffffff;
+                text-shadow: 
+                  0 0 6px rgba(0, 0, 0, 0.8),
+                  0 2px 6px rgba(0, 0, 0, 0.9);
               ">${count > 0 ? count : ''}</div>
             </div>
+
+            <!-- Base circular luminosa bajo el pin -->
+            <div style="
+              position: absolute;
+              bottom: 0;
+              left: 50%;
+              transform: translateX(-50%);
+              width: 32px;
+              height: 12px;
+              border-radius: 50%;
+              background: radial-gradient(circle, ${glowColor} 0%, transparent 70%);
+              opacity: 0.9;
+              filter: blur(2px);
+            "></div>
           </div>
         `
         

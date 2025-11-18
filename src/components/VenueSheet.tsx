@@ -11,6 +11,7 @@ import { logger, withErrorHandling } from '@/lib/logger'
 import { useToastContext } from '@/contexts/ToastContext'
 import { shareVenue } from '@/lib/share'
 import { addPoints, PointAction } from '@/lib/points-system'
+import { getPhotoUrl } from '@/lib/api/photos'
 
 interface VenueSheetProps {
   venue: VenueWithCount
@@ -123,11 +124,10 @@ export default function VenueSheet({
   // Función para crear historia automática al comprar entrada
   const createTicketStory = async (venue: VenueWithCount, userId: string) => {
     try {
-      // Obtener la primera foto del venue
-      const photos = (venue as any).photos
-      const photoUrl = photos && photos.length > 0 
-        ? `/api/photo?ref=${photos[0]}&type=${venue.type}`
-        : null
+      // Obtener la primera foto del venue usando el helper centralizado
+      const photos = (venue as any).photos as string[] | undefined
+      const photoRef = photos && photos.length > 0 ? photos[0] : venue.photo_ref || null
+      const photoUrl = photoRef ? getPhotoUrl(photoRef, venue.type || 'other') : getPhotoUrl(null, venue.type || 'other')
       
       const city = (venue as any).city || 'Madrid'
       
@@ -487,7 +487,7 @@ export default function VenueSheet({
               className="flex-1 py-2 px-4 rounded-lg bg-dark-secondary text-text-light hover:bg-dark-hover text-center flex items-center justify-center"
             >
               <Navigation className="w-4 h-4 mr-2" />
-              Navegar
+              Ir en Google Maps 🚀🚀🚀
             </button>
             
             {venue.website && (
