@@ -190,115 +190,131 @@ export default function ProfileScreen({
   const username = profile?.username || user.user_metadata?.name || user.email?.split('@')[0] || 'Usuario'
   const bio = profile?.bio || ''
 
+  // Datos del perfil (temporales hasta que se añadan a la BD)
+  const age = profile?.age || 22
+  const city = profile?.city || 'Madrid'
+  const musicGenres = profile?.music_genres || ['Techno', 'House']
+
   return (
-    <div className="flex-1 bg-gradient-to-b from-dark-primary via-dark-secondary to-dark-primary overflow-y-auto pb-20">
+    <div className="flex-1 bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 overflow-y-auto pb-20">
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-        {/* Profile Header Card */}
-        <div className="bg-dark-card/50 backdrop-blur-sm rounded-3xl p-8 border border-neon-blue/20 shadow-lg shadow-neon-blue/10">
-          {/* Avatar Section */}
-          <div className="flex flex-col items-center mb-6">
-            <div className="relative group">
-              {profile?.avatar_url ? (
-                <img
-                  src={profile.avatar_url}
-                  alt={username}
-                  className="w-32 h-32 rounded-2xl object-cover border-4 border-neon-blue/40 shadow-xl shadow-neon-blue/30"
+        {/* Profile Header Card - Nuevo diseño */}
+        <div className="bg-gradient-to-b from-gray-900/95 via-gray-800/90 to-gray-900/95 backdrop-blur-xl rounded-3xl p-8 border border-purple-500/20 shadow-2xl relative overflow-hidden">
+          {/* Fondo con efecto blur */}
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-900/10 via-transparent to-blue-900/10" />
+          
+          {/* Contenido */}
+          <div className="relative z-10">
+            {/* Botón editar perfil - esquina superior derecha */}
+            <button
+              onClick={() => {
+                setEditingUsername(username)
+                setEditingBio(bio)
+                setShowEditBio(true)
+              }}
+              className="absolute top-0 right-0 flex items-center gap-2 px-4 py-2 text-text-secondary hover:text-white transition-colors"
+            >
+              <Edit2 className="w-4 h-4" />
+              <span className="text-sm">editar perfil</span>
+            </button>
+
+            {/* Avatar Section */}
+            <div className="flex flex-col items-center mb-6 mt-8">
+              <div className="relative group">
+                {/* Foto de perfil con borde degradado morado */}
+                <div className="p-1 rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-purple-600 shadow-2xl shadow-purple-500/50">
+                  {profile?.avatar_url ? (
+                    <img
+                      src={profile.avatar_url}
+                      alt={username}
+                      className="w-36 h-36 rounded-full object-cover bg-gray-900"
+                    />
+                  ) : (
+                    <div className="w-36 h-36 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center text-6xl font-bold text-white">
+                      {username.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Camera Button Overlay */}
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={avatarUploading}
+                  className="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  {avatarUploading ? (
+                    <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Camera className="w-10 h-10 text-white" />
+                  )}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={handleAvatarSelect}
+                  className="hidden"
                 />
+              </div>
+
+              {/* Username and Info */}
+              {!showEditBio ? (
+                <div className="text-center mt-6 w-full">
+                  {/* Nombre grande */}
+                  <h1 className="text-4xl font-bold text-white mb-2">
+                    {username}
+                  </h1>
+                  
+                  {/* Username con @ */}
+                  <p className="text-text-secondary text-lg mb-4">
+                    @{username.toLowerCase().replace(/\s+/g, '_')}
+                  </p>
+                  
+                  {/* Edad · Ciudad · Géneros */}
+                  <p className="text-text-light text-base">
+                    {age} años · {city} · {musicGenres.join(' & ')}
+                  </p>
+                </div>
               ) : (
-                <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-neon-pink via-neon-blue to-neon-cyan flex items-center justify-center text-5xl font-bold text-white shadow-xl shadow-neon-blue/30">
-                  {username.charAt(0).toUpperCase()}
+                <div className="w-full mt-6 space-y-3">
+                  <input
+                    type="text"
+                    value={editingUsername}
+                    onChange={(e) => setEditingUsername(e.target.value)}
+                    maxLength={30}
+                    placeholder="Nombre de usuario"
+                    className="w-full bg-gray-800/80 text-text-light text-center rounded-lg p-3 border border-purple-500/30 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                  <textarea
+                    value={editingBio}
+                    onChange={(e) => setEditingBio(e.target.value)}
+                    maxLength={80}
+                    rows={2}
+                    placeholder="Bio (opcional)"
+                    className="w-full bg-gray-800/80 text-text-light text-center rounded-lg p-3 border border-purple-500/30 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                  <p className="text-xs text-text-secondary text-right">{editingBio.length}/80</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowEditBio(false)}
+                      className="flex-1 py-2 rounded-lg bg-gray-800 text-text-light hover:bg-gray-700 transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={handleSaveProfile}
+                      className="flex-1 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold hover:opacity-90 transition-opacity"
+                    >
+                      Guardar
+                    </button>
+                  </div>
                 </div>
               )}
-              
-              {/* Camera Button Overlay */}
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={avatarUploading}
-                className="absolute inset-0 rounded-2xl bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                {avatarUploading ? (
-                  <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <Camera className="w-10 h-10 text-white" />
-                )}
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                onChange={handleAvatarSelect}
-                className="hidden"
-              />
             </div>
-
-            {/* Username and Bio */}
-            {!showEditBio ? (
-              <div className="text-center mt-4 w-full relative">
-                {/* Botón de editar en la esquina superior derecha */}
-                <button
-                  onClick={() => {
-                    setEditingUsername(username)
-                    setEditingBio(bio)
-                    setShowEditBio(true)
-                  }}
-                  className="absolute -top-2 -right-2 p-2 rounded-full bg-dark-secondary/80 hover:bg-dark-hover border border-neon-blue/30 transition-colors"
-                >
-                  <Edit2 className="w-4 h-4 text-neon-blue" />
-                </button>
-                
-                {/* Nombre centrado */}
-                <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-neon-pink to-neon-blue mb-2">
-                  {username}
-                </h2>
-                
-                {/* Biografía */}
-                {bio ? (
-                  <p className="text-text-light text-lg px-4">{bio}</p>
-                ) : (
-                  <p className="text-text-secondary text-sm italic">
-                    Añade una biografía
-                  </p>
-                )}
-              </div>
-            ) : (
-              <div className="w-full mt-4 space-y-3">
-                <input
-                  type="text"
-                  value={editingUsername}
-                  onChange={(e) => setEditingUsername(e.target.value)}
-                  maxLength={30}
-                  placeholder="Nombre de usuario"
-                  className="w-full bg-dark-secondary text-text-light text-center rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-neon-blue"
-                />
-                <textarea
-                  value={editingBio}
-                  onChange={(e) => setEditingBio(e.target.value)}
-                  maxLength={80}
-                  rows={2}
-                  placeholder="Erasmus en Varsovia 🍻"
-                  className="w-full bg-dark-secondary text-text-light text-center rounded-lg p-3 resize-none focus:outline-none focus:ring-2 focus:ring-neon-blue"
-                />
-                <p className="text-xs text-text-secondary text-right">{editingBio.length}/80</p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setShowEditBio(false)}
-                    className="flex-1 py-2 rounded-lg bg-dark-secondary text-text-light hover:bg-dark-hover transition-colors"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={handleSaveProfile}
-                    className="flex-1 py-2 rounded-lg bg-gradient-to-r from-neon-pink to-neon-blue text-white font-semibold hover:opacity-90 transition-opacity"
-                  >
-                    Guardar
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Points and QR Section */}
-          <div className="border-t border-neon-blue/20 pt-6 mt-6">
+          <div className="border-t border-purple-500/20 pt-6 mt-6 relative z-10">
             <div className="grid grid-cols-2 gap-3 mb-4">
               {/* Puntos Card */}
               <div className="bg-gradient-to-br from-yellow-500/10 to-orange-500/10 rounded-xl p-4 border border-yellow-500/30">

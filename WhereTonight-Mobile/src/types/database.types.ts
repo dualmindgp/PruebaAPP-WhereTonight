@@ -67,6 +67,12 @@ export interface Database {
           username: string | null
           bio: string | null
           avatar_url: string | null
+          birth_date: string | null
+          age: number | null
+          city: string | null
+          music_genres: string[] | null
+          custom_handle: string | null
+          language: string | null
           created_at: string
           updated_at: string
         }

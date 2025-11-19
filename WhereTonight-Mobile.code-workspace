@@ -1,0 +1,14 @@
+{
+  "folders": [
+    {
+      "name": "WhereTonight-Mobile",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "typescript.preferences.includePackageJsonAutoImports": "on",
+    "typescript.suggest.autoImports": true,
+    "typescript.updateImportsOnFileMove.enabled": "always",
+    "typescript.workspaceSymbols.scope": "allOpenProjects"
+  }
+}

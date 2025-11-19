@@ -99,6 +99,51 @@ export interface Database {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          id: string
+          username: string | null
+          bio: string | null
+          avatar_url: string | null
+          birth_date: string | null
+          age: number | null
+          city: string | null
+          music_genres: string[] | null
+          custom_handle: string | null
+          language: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          username?: string | null
+          bio?: string | null
+          avatar_url?: string | null
+          birth_date?: string | null
+          age?: number | null
+          city?: string | null
+          music_genres?: string[] | null
+          custom_handle?: string | null
+          language?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          username?: string | null
+          bio?: string | null
+          avatar_url?: string | null
+          birth_date?: string | null
+          age?: number | null
+          city?: string | null
+          music_genres?: string[] | null
+          custom_handle?: string | null
+          language?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tickets: {
         Row: {
           id: string
@@ -233,3 +278,4 @@ export type Comment = Database['public']['Tables']['comments']['Row']
 export type Ticket = Database['public']['Tables']['tickets']['Row']
 export type SocialPost = Database['public']['Tables']['social_posts']['Row']
 export type SocialPostWithUser = Database['public']['Views']['social_posts_with_user']['Row']
+export type Profile = Database['public']['Tables']['profiles']['Row']

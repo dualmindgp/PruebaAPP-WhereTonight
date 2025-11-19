@@ -84,24 +84,30 @@ const Map = forwardRef<any, MapProps>(({ venues, onVenueClick, selectedVenueId, 
             userLocationMarkerRef.current.remove()
           }
 
-          // Crear elemento para el marcador de ubicación del usuario
+          // Crear elemento para el marcador de ubicación del usuario con escalado dinámico
           const el = document.createElement('div')
-          el.style.width = '40px'
-          el.style.height = '40px'
+          const scale = getMarkerScale(15) // Usar zoom 15 como base para la ubicación
+          const size = 40 * scale
+          
+          el.style.width = `${size}px`
+          el.style.height = `${size}px`
           el.style.display = 'flex'
           el.style.alignItems = 'center'
           el.style.justifyContent = 'center'
+          el.style.transform = `scale(${scale})`
+          el.style.transformOrigin = 'center'
+          el.style.transition = 'transform 0.3s ease'
           
           el.innerHTML = `
             <div style="
               width: 40px;
               height: 40px;
               border-radius: 50%;
-              background: linear-gradient(135deg, #00FFFF 0%, #0099FF 100%);
+              background: linear-gradient(135deg, #9333EA 0%, #A855F7 100%);
               border: 4px solid white;
               box-shadow: 
-                0 0 0 4px rgba(0, 255, 255, 0.3),
-                0 0 20px rgba(0, 255, 255, 0.6),
+                0 0 0 4px rgba(147, 51, 234, 0.3),
+                0 0 20px rgba(147, 51, 234, 0.6),
                 0 4px 10px rgba(0, 0, 0, 0.4);
               display: flex;
               align-items: center;
@@ -118,20 +124,20 @@ const Map = forwardRef<any, MapProps>(({ venues, onVenueClick, selectedVenueId, 
             </div>
           `
 
-          // Agregar animación de pulso
+          // Agregar animación de pulso con colores morados
           const style = document.createElement('style')
           style.textContent = `
             @keyframes pulse {
               0%, 100% {
                 box-shadow: 
-                  0 0 0 4px rgba(0, 255, 255, 0.3),
-                  0 0 20px rgba(0, 255, 255, 0.6),
+                  0 0 0 4px rgba(147, 51, 234, 0.3),
+                  0 0 20px rgba(147, 51, 234, 0.6),
                   0 4px 10px rgba(0, 0, 0, 0.4);
               }
               50% {
                 box-shadow: 
-                  0 0 0 8px rgba(0, 255, 255, 0.2),
-                  0 0 30px rgba(0, 255, 255, 0.8),
+                  0 0 0 8px rgba(147, 51, 234, 0.2),
+                  0 0 30px rgba(168, 85, 247, 0.8),
                   0 4px 10px rgba(0, 0, 0, 0.4);
               }
             }
@@ -215,26 +221,26 @@ const Map = forwardRef<any, MapProps>(({ venues, onVenueClick, selectedVenueId, 
         
         const count = venue.count_today || 0
         
-        // Determinar el color según la popularidad con escala gradual
+        // Determinar el color según la popularidad con escala gradual (ahora en tonos morados)
         let color, glowColor
         if (venue.id === selectedVenueId) {
-          color = '#FF00FF' // Rosa/magenta para seleccionado
-          glowColor = 'rgba(255, 0, 255, 0.8)'
+          color = '#9333EA' // Morado brillante para seleccionado
+          glowColor = 'rgba(147, 51, 234, 0.8)'
         } else if (count >= 20) {
-          color = '#FF00FF' // Rosa/magenta para muy popular (20+ personas)
-          glowColor = 'rgba(255, 0, 255, 0.6)'
+          color = '#9333EA' // Morado brillante para muy popular (20+ personas)
+          glowColor = 'rgba(147, 51, 234, 0.6)'
         } else if (count >= 10) {
-          color = '#FF1493' // Rosa fuerte para popular (10-19 personas)
-          glowColor = 'rgba(255, 20, 147, 0.6)'
+          color = '#A855F7' // Morado medio para popular (10-19 personas)
+          glowColor = 'rgba(168, 85, 247, 0.6)'
         } else if (count >= 5) {
-          color = '#00FFFF' // Cyan para moderado (5-9 personas)
-          glowColor = 'rgba(0, 255, 255, 0.6)'
+          color = '#C084FC' // Morado claro para moderado (5-9 personas)
+          glowColor = 'rgba(192, 132, 252, 0.6)'
         } else if (count > 0) {
-          color = '#4FC3F7' // Azul claro para poco popular (1-4 personas)
-          glowColor = 'rgba(79, 195, 247, 0.6)'
+          color = '#D8B4FE' // Morado muy claro para poco popular (1-4 personas)
+          glowColor = 'rgba(216, 180, 254, 0.6)'
         } else {
-          color = '#4A5568' // Gris para vacío
-          glowColor = 'rgba(74, 85, 104, 0.4)'
+          color = '#6B7280' // Gris para vacío
+          glowColor = 'rgba(107, 114, 128, 0.4)'
         }
         
         // Calcular escala inicial basada en el zoom actual

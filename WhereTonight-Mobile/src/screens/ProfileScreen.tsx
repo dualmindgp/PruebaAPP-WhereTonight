@@ -28,6 +28,29 @@ export default function ProfileScreen({
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [username, setUsername] = useState('')
+  const [bio, setBio] = useState('')
+
+  // Helper para calcular edad desde birth_date
+  const calculateAge = (birthDateString: string): number | null => {
+    if (!birthDateString) return null
+    
+    const birthDate = new Date(birthDateString)
+    const today = new Date()
+    
+    if (birthDate > today) return null
+    
+    let age = today.getFullYear() - birthDate.getFullYear()
+    const monthDiff = today.getMonth() - birthDate.getMonth()
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--
+    }
+    
+    return age
+  }
 
   useEffect(() => {
     loadProfile()
@@ -106,71 +129,98 @@ export default function ProfileScreen({
     )
   }
 
+  // Datos del perfil (ahora dinámicos desde la BD)
+  const age = profile?.birth_date ? calculateAge(profile.birth_date) : null
+  const city = profile?.city
+  const musicGenres = profile?.music_genres || []
+
   return (
-    <SafeAreaView className="flex-1 bg-dark-primary">
+    <SafeAreaView className="flex-1 bg-gray-900">
       <ScrollView className="flex-1">
-        {/* Header */}
-        <View className="bg-gradient-to-b from-neon-blue/20 to-dark-primary px-6 py-8">
-          <View className="items-center">
-            <View className="w-24 h-24 rounded-full bg-gradient-to-br from-neon-cyan to-neon-blue items-center justify-center mb-4">
-              <User className="w-12 h-12 text-white" />
-            </View>
-            {editing ? (
-              <View className="w-full gap-3">
-                <TextInput
-                  value={username}
-                  onChangeText={setUsername}
-                  placeholder="Nombre de usuario"
-                  placeholderTextColor="#999"
-                  className="w-full px-4 py-2 bg-dark-secondary text-text-light rounded-lg border border-neon-blue/30"
-                />
-                <TextInput
-                  value={bio}
-                  onChangeText={setBio}
-                  placeholder="Bio"
-                  placeholderTextColor="#999"
-                  multiline
-                  maxLength={150}
-                  className="w-full px-4 py-2 bg-dark-secondary text-text-light rounded-lg border border-neon-blue/30 min-h-[80px]"
-                />
-                <View className="flex-row gap-2">
-                  <TouchableOpacity
-                    onPress={() => {
-                      setEditing(false)
-                      setUsername(profile?.username || '')
-                      setBio(profile?.bio || '')
-                    }}
-                    className="flex-1 px-4 py-2 bg-dark-secondary rounded-lg"
-                  >
-                    <Text className="text-text-light text-center font-bold">Cancelar</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={handleUpdateProfile}
-                    className="flex-1 px-4 py-2 bg-neon-blue rounded-lg"
-                  >
-                    <Text className="text-white text-center font-bold">Guardar</Text>
-                  </TouchableOpacity>
+        {/* Header - Diseño centrado más compacto */}
+        <View className="bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 rounded-2xl p-6 border border-purple-500/20 shadow-xl relative overflow-hidden">
+          {/* Fondo con efecto blur */}
+          <View className="absolute inset-0 bg-gradient-to-br from-purple-900/10 via-transparent to-blue-900/10" />
+          
+          {/* Contenido */}
+          <View className="relative z-10">
+            {/* Botón editar perfil - esquina superior derecha, más separado */}
+            <TouchableOpacity
+              onPress={() => setShowEditProfileModal(true)}
+              className="absolute -top-2 -right-2 flex-row items-center gap-2 px-3 py-2 bg-gray-800/80 rounded-lg"
+            >
+              <Edit size={16} color="#9CA3AF" />
+              <Text className="text-gray-400 text-sm">editar</Text>
+            </TouchableOpacity>
+
+            {/* Avatar Section - Centrado */}
+            <View className="flex-col items-center mb-4 mt-6">
+              <View className="relative">
+                {/* Foto de perfil con borde degradado morado - más pequeña */}
+                <View className="p-1 rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-purple-600 shadow-lg shadow-purple-500/50">
+                  {profile?.avatar_url ? (
+                    <Image
+                      source={{ uri: profile.avatar_url }}
+                      className="w-28 h-28 rounded-full bg-gray-900"
+                    />
+                  ) : (
+                    <View className="w-28 h-28 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 items-center justify-center">
+                      <Text className="text-5xl font-bold text-white">
+                        {(profile?.username || 'U').charAt(0).toUpperCase()}
+                      </Text>
+                    </View>
+                  )}
                 </View>
               </View>
-            ) : (
-              <>
-                <Text className="text-2xl font-bold text-white mb-1">
-                  {profile?.username || 'Usuario'}
+
+              {/* Username and Info - más compacto */}
+              <View className="items-center mt-4 w-full">
+                {/* Nombre grande */}
+                <Text className="text-3xl font-bold text-white mb-1">
+                  {username}
                 </Text>
-                <Text className="text-text-secondary text-center mb-4">
-                  {profile?.bio || 'Sin bio'}
+                
+                {/* Username con @ - solo si es diferente al nombre o hay handle personalizado */}
+                {(profile?.custom_handle || (profile?.username || 'usuario').toLowerCase().replace(/\s+/g, '_') !== (profile?.username || '').toLowerCase()) && (
+                  <Text className="text-gray-400 text-base mb-2">
+                    @{profile?.custom_handle || (profile?.username || 'usuario').toLowerCase().replace(/\s+/g, '_')}
+                  </Text>
+                )}
+                
+                {/* Edad · Ciudad · Géneros - más compacto */}
+                <Text className="text-gray-300 text-sm">
+                  {age && `${age} años`}
+                  {age && city && ' · '}
+                  {city && city}
+                  {(age || city) && musicGenres && musicGenres.length > 0 && ' · '}
+                  {musicGenres && musicGenres.length > 0 && musicGenres.slice(0, 3).join(' & ')}
+                  {musicGenres && musicGenres.length > 3 && ` +${musicGenres.length - 3}`}
                 </Text>
-                <TouchableOpacity
-                  onPress={() => setEditing(true)}
-                  className="flex-row items-center gap-2 px-4 py-2 bg-neon-blue/20 rounded-lg border border-neon-blue/30"
-                >
-                  <Edit className="w-4 h-4 text-neon-blue" />
-                  <Text className="text-neon-blue font-bold">Editar Perfil</Text>
-                </TouchableOpacity>
-              </>
-            )}
+              </View>
+            </View>
           </View>
         </View>
+
+        {/* Edit Profile Modal */}
+        <EditProfileModal
+          isOpen={showEditProfileModal}
+          onClose={() => setShowEditProfileModal(false)}
+          userId={userId}
+          currentProfile={profile ? {
+            id: profile.id,
+            username: profile.username || undefined,
+            bio: profile.bio || undefined,
+            avatar_url: profile.avatar_url || undefined,
+            birth_date: profile.birth_date || undefined,
+            city: profile.city || undefined,
+            music_genres: profile.music_genres || undefined,
+            custom_handle: profile.custom_handle || undefined
+          } : {}}
+          onSuccess={() => {
+            loadProfile()
+            toast.success('¡Perfil actualizado!')
+          }}
+        />
 
         {/* Menu Items */}
         <View className="px-4 py-6 gap-3">

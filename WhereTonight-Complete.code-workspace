@@ -1,0 +1,24 @@
+{
+  "folders": [
+    {
+      "name": "WhereTonight Web",
+      "path": "."
+    },
+    {
+      "name": "WhereTonight Mobile",
+      "path": "./WhereTonight-Mobile"
+    }
+  ],
+  "settings": {
+    "typescript.preferences.includePackageJsonAutoImports": "on",
+    "typescript.suggest.autoImports": true,
+    "typescript.updateImportsOnFileMove.enabled": "always"
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-vscode.vscode-typescript-next",
+      "bradlc.vscode-tailwindcss",
+      "esbenp.prettier-vscode"
+    ]
+  }
+}

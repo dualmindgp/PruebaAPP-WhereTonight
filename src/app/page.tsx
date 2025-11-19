@@ -559,13 +559,9 @@ export default function Home() {
         <EditProfileModal
           isOpen={showEditProfileModal}
           onClose={() => setShowEditProfileModal(false)}
-          currentProfile={{
-            id: user.id,
-            username: profile.username,
-            bio: profile.bio,
-            avatar_url: profile.avatar_url
-          }}
-          onProfileUpdated={handleProfileUpdated}
+          userId={user.id}
+          currentProfile={profile}
+          onSuccess={handleProfileUpdated}
         />
       )}
     </div>
