@@ -2,17 +2,17 @@
 
 import React, { useState, useRef } from 'react'
 import { User } from '@supabase/supabase-js'
-import { Camera, UserPlus, Users, LogOut, Edit2, Star, TrendingUp, QrCode } from 'lucide-react'
+import { Camera, UserPlus, Users, LogOut, Edit2, QrCode, Star, TrendingUp } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useLanguage } from '@/contexts/LanguageContext'
 import LanguageSelector from './LanguageSelector'
 import ActivityFeed from './ActivityFeed'
 import AddFriendModal from './AddFriendModal'
-import QRScanner from './QRScanner'
-import PointsBadge from './PointsBadge'
 import { VenueWithCount } from '@/lib/database.types'
 import { logger, withErrorHandling } from '@/lib/logger'
 import { useToastContext } from '@/contexts/ToastContext'
+import QRScanner from './QRScanner'
+import PointsBadge from './PointsBadge'
 import { getUserPoints, getLevelFromPoints } from '@/lib/points-system'
 
 interface ProfileScreenProps {
@@ -33,8 +33,12 @@ export default function ProfileScreen({
   const { t } = useLanguage()
   const toast = useToastContext()
   const [showAddFriendModal, setShowAddFriendModal] = useState(false)
-  const [showQRScanner, setShowQRScanner] = useState(false)
   const [avatarUploading, setAvatarUploading] = useState(false)
+  const [showEditBio, setShowEditBio] = useState(false)
+  const [editingBio, setEditingBio] = useState(profile?.bio || '')
+  const [editingUsername, setEditingUsername] = useState(profile?.username || '')
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [showQRScanner, setShowQRScanner] = useState(false)
   const [points, setPoints] = useState(0)
   const [level, setLevel] = useState(1)
 
@@ -58,10 +62,6 @@ export default function ProfileScreen({
     // Aquí puedes procesar el código QR
     // Por ejemplo, añadir amigo si es un código de amistad
   }
-  const [showEditBio, setShowEditBio] = useState(false)
-  const [editingBio, setEditingBio] = useState(profile?.bio || '')
-  const [editingUsername, setEditingUsername] = useState(profile?.username || '')
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const uploadAvatar = async (file: File) => {
     try {
@@ -296,6 +296,7 @@ export default function ProfileScreen({
               </div>
             )}
           </div>
+
           {/* Points and QR Section */}
           <div className="border-t border-neon-blue/20 pt-6 mt-6">
             <div className="grid grid-cols-2 gap-3 mb-4">
@@ -327,6 +328,7 @@ export default function ProfileScreen({
               <span className="text-purple-400 font-semibold">Escanear Código QR</span>
             </button>
           </div>
+
           {/* Friends Section */}
           <div className="border-t border-neon-blue/20 pt-6 mt-6">
             <div className="flex items-center justify-between mb-4">
@@ -402,12 +404,13 @@ export default function ProfileScreen({
         userId={user.id}
         username={username}
       />
-    {/* QR Scanner */}
-    <QRScanner
-      isOpen={showQRScanner}
-      onClose={() => setShowQRScanner(false)}
-      onScan={handleQRScan}
-    />
+
+      {/* QR Scanner */}
+      <QRScanner
+        isOpen={showQRScanner}
+        onClose={() => setShowQRScanner(false)}
+        onScan={handleQRScan}
+      />
     </div>
   )
 }

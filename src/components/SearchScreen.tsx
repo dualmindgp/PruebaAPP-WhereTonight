@@ -5,7 +5,6 @@ import { Search, Users, Star, DollarSign, MapPin } from 'lucide-react'
 import { VenueWithCount } from '@/lib/database.types'
 import { useLanguage } from '@/contexts/LanguageContext'
 import TwoStepSearchBar from './TwoStepSearchBar'
-import { getPhotoUrl } from '@/lib/api/photos'
 
 interface SearchScreenProps {
   venues: VenueWithCount[]
@@ -260,19 +259,19 @@ export default function SearchScreen({ venues, onVenueClick, onNavigateToMap }: 
                   <div className="w-24 h-24 flex-shrink-0 relative bg-dark-secondary">
                     {venue.photo_ref ? (
                       <img
-                        src={getPhotoUrl(venue.photo_ref, venue.type)}
+                        src={`/api/photo?ref=${venue.photo_ref}&type=${venue.type}`}
                         alt={venue.name}
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          // Fallback automático
-                          if (!e.currentTarget.src.includes('?type=')) {
-                            e.currentTarget.src = getPhotoUrl(null, venue.type)
+                          // Fallback automático desde el servidor
+                          if (!e.currentTarget.src.includes('fallback')) {
+                            e.currentTarget.src = `/api/photo?type=${venue.type}&fallback=true`
                           }
                         }}
                       />
                     ) : (
                       <img
-                        src={getPhotoUrl(null, venue.type)}
+                        src={`/api/photo?type=${venue.type}&fallback=true`}
                         alt={venue.name}
                         className="w-full h-full object-cover"
                       />

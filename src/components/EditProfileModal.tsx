@@ -6,8 +6,6 @@ import { supabase } from '@/lib/supabase'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { logger } from '@/lib/logger'
 import { useToastContext } from '@/contexts/ToastContext'
-import { Camera as CapacitorCamera, CameraResultType, CameraSource } from '@capacitor/camera'
-import { Capacitor } from '@capacitor/core'
 
 interface EditProfileModalProps {
   isOpen: boolean
@@ -67,44 +65,6 @@ export default function EditProfileModal({
       setAvatarPreview(reader.result as string)
     }
     reader.readAsDataURL(file)
-  }
-
-  const handleTakePhoto = async () => {
-    try {
-      // Si estamos en plataforma nativa, usar cámara de Capacitor
-      if (Capacitor.isNativePlatform()) {
-        const image = await CapacitorCamera.getPhoto({
-          quality: 90,
-          allowEditing: true,
-          resultType: CameraResultType.Base64,
-          source: CameraSource.Prompt // Permite elegir entre cámara y galería
-        })
-
-        if (image.base64String) {
-          // Convertir base64 a File
-          const byteString = atob(image.base64String)
-          const arrayBuffer = new ArrayBuffer(byteString.length)
-          const uint8Array = new Uint8Array(arrayBuffer)
-          
-          for (let i = 0; i < byteString.length; i++) {
-            uint8Array[i] = byteString.charCodeAt(i)
-          }
-          
-          const blob = new Blob([uint8Array], { type: `image/${image.format}` })
-          const file = new File([blob], `avatar.${image.format}`, { type: `image/${image.format}` })
-          
-          setAvatarFile(file)
-          setAvatarPreview(`data:image/${image.format};base64,${image.base64String}`)
-          setError(null)
-        }
-      } else {
-        // En web, usar input file tradicional
-        fileInputRef.current?.click()
-      }
-    } catch (error) {
-      console.error('Error tomando foto:', error)
-      toast.error('Error al acceder a la cámara')
-    }
   }
 
   const uploadAvatar = async (file: File, userId: string): Promise<string | null> => {
@@ -219,7 +179,7 @@ export default function EditProfileModal({
                 </div>
               )}
               <button
-                onClick={handleTakePhoto}
+                onClick={() => fileInputRef.current?.click()}
                 className="absolute bottom-0 right-0 p-2 rounded-full bg-neon-blue text-white hover:bg-neon-blue/80 transition-colors"
               >
                 <Camera className="w-4 h-4" />

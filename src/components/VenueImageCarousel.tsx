@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { motion, PanInfo, useMotionValue, useTransform } from 'framer-motion';
 import { VenueWithCount } from '@/lib/database.types';
-import { getPhotoUrl } from '@/lib/api/photos';
 import './Carousel.css';
 
 interface VenueImageCarouselProps {
@@ -35,9 +34,7 @@ export default function VenueImageCarousel({
   const trackItemOffset = itemWidth + GAP;
 
   // Obtener las fotos del venue
-  const photos = (venue.photo_refs && venue.photo_refs.length > 0) 
-    ? venue.photo_refs 
-    : (venue.photo_ref ? [venue.photo_ref] : []);
+  const photos = venue.photo_refs || (venue.photo_ref ? [venue.photo_ref] : []);
   
   // Si no hay fotos, usar imágenes de fallback según el tipo
   const getFallbackImage = () => {
@@ -52,7 +49,7 @@ export default function VenueImageCarousel({
   };
 
   const imageUrls = photos.length > 0 
-    ? photos.map(photo => getPhotoUrl(photo, venue.type))
+    ? photos.map(photo => `/api/photo?ref=${photo}&type=${venue.type}`)
     : [getFallbackImage()];
 
   const carouselItems = loop && imageUrls.length > 1 ? [...imageUrls, imageUrls[0]] : imageUrls;

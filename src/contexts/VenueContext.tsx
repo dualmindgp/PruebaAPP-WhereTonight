@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { VenueWithCount } from '@/lib/database.types'
-import { getVenues } from '@/lib/api/venues'
+import { supabase } from '@/lib/supabase'
 
 interface VenueContextType {
   venues: VenueWithCount[]
@@ -22,11 +22,25 @@ export function VenueProvider({ children }: { children: ReactNode }) {
     
     try {
       setIsLoading(true)
-      // Llamada directa a Supabase via función client-side
-      const data = await getVenues()
-      setVenues(data)
+      console.log('📍 Cargando venues desde Supabase...')
+      
+      // Cargar venues directamente desde Supabase
+      const { data, error } = await supabase
+        .from('venues')
+        .select('*')
+        .order('name')
+      
+      if (error) {
+        console.error('❌ Error loading venues from Supabase:', error)
+        return
+      }
+      
+      if (data) {
+        console.log(`✅ Cargados ${data.length} venues`)
+        setVenues(data as VenueWithCount[])
+      }
     } catch (error) {
-      console.error('Error loading venues:', error)
+      console.error('❌ Error loading venues:', error)
     } finally {
       setIsLoading(false)
     }

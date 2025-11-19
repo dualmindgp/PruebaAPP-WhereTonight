@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { getPhotoUrl } from '@/lib/api/photos'
 
 interface PhotoCarouselProps {
   photos: string[]
@@ -33,13 +32,13 @@ export default function PhotoCarousel({ photos, venueName, venueType = 'other' }
     <div className="relative w-full aspect-video bg-dark-secondary rounded-lg overflow-hidden">
       {/* Imagen actual */}
       <img
-        src={getPhotoUrl(photos[currentIndex], venueType)}
+        src={`/api/photo?ref=${photos[currentIndex]}&type=${venueType}`}
         alt={`${venueName} - foto ${currentIndex + 1}`}
         className="w-full h-full object-cover"
         onError={(e) => {
-          // Si falla, usar fallback
-          if (!e.currentTarget.src.includes('?type=')) {
-            e.currentTarget.src = getPhotoUrl(null, venueType)
+          // Si falla, intentar recargar con fallback explícito
+          if (!e.currentTarget.src.includes('fallback')) {
+            e.currentTarget.src = `/api/photo?type=${venueType}&fallback=true`
           }
         }}
       />

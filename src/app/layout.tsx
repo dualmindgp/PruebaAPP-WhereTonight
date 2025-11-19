@@ -1,13 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { QueryProvider } from "@/components/QueryProvider";
 import { VenueProvider } from "@/contexts/VenueContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ToastProvider } from "@/contexts/ToastContext";
 import PWARegister from "@/components/PWARegister";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import CapacitorInit from "@/components/CapacitorInit";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -61,18 +59,15 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body className={inter.className}>
-        <CapacitorInit />
         <PWARegister />
         <ErrorBoundary>
-          <QueryProvider>
-            <ToastProvider>
-              <LanguageProvider>
-                <VenueProvider>
-                  {children}
-                </VenueProvider>
-              </LanguageProvider>
-            </ToastProvider>
-          </QueryProvider>
+          <ToastProvider>
+            <LanguageProvider>
+              <VenueProvider>
+                {children}
+              </VenueProvider>
+            </LanguageProvider>
+          </ToastProvider>
         </ErrorBoundary>
       </body>
     </html>

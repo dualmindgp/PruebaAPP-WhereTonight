@@ -4,8 +4,6 @@ import React, { useRef, useState, forwardRef, useImperativeHandle, useEffect } f
 import { Map as MapGL } from 'react-map-gl/maplibre'
 import { VenueWithCount } from '@/lib/database.types'
 import maplibregl from 'maplibre-gl'
-import { Geolocation } from '@capacitor/geolocation'
-import { Capacitor } from '@capacitor/core'
 
 export interface MapProps {
   venues: VenueWithCount[]
@@ -68,130 +66,108 @@ const Map = forwardRef<any, MapProps>(({ venues, onVenueClick, selectedVenueId, 
   }, [initialCenter, mapReady])
 
   // Función para ir a la ubicación del usuario
-  const goToUserLocation = async () => {
+  const goToUserLocation = () => {
+    if (!navigator.geolocation) {
+      alert('La geolocalización no está soportada en tu navegador')
+      return
+    }
+
     setIsLocating(true)
-    
-    try {
-      // Verificar y pedir permisos
-      const permissions = await Geolocation.checkPermissions()
-      
-      if (permissions.location !== 'granted') {
-        const request = await Geolocation.requestPermissions()
-        if (request.location !== 'granted') {
-          alert('Necesitamos permisos de ubicación para mostrarte dónde estás')
-          setIsLocating(false)
-          return
-        }
-      }
-
-      // Obtener ubicación actual
-      const position = await Geolocation.getCurrentPosition({
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
-      })
-
-      const { latitude, longitude } = position.coords
-      const map = mapRef.current?.getMap()
-      
-      if (map) {
-        // Remover marcador anterior si existe
-        if (userLocationMarkerRef.current) {
-          userLocationMarkerRef.current.remove()
-        }
-
-        // Crear elemento para el marcador de ubicación del usuario
-        const el = document.createElement('div')
-        el.style.width = '40px'
-        el.style.height = '40px'
-        el.style.display = 'flex'
-        el.style.alignItems = 'center'
-        el.style.justifyContent = 'center'
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords
+        const map = mapRef.current?.getMap()
         
-        el.innerHTML = `
-          <div style="
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #00FFFF 0%, #0099FF 100%);
-            border: 4px solid white;
-            box-shadow: 
-              0 0 0 4px rgba(0, 255, 255, 0.3),
-              0 0 20px rgba(0, 255, 255, 0.6),
-              0 4px 10px rgba(0, 0, 0, 0.4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            animation: pulse 2s infinite;
-          ">
-            <div style="
-              width: 12px;
-              height: 12px;
-              border-radius: 50%;
-              background: white;
-              box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
-            "></div>
-          </div>
-        `
+        if (map) {
+          // Remover marcador anterior si existe
+          if (userLocationMarkerRef.current) {
+            userLocationMarkerRef.current.remove()
+          }
 
-        // Agregar animación de pulso
-        const style = document.createElement('style')
-        style.textContent = `
-          @keyframes pulse {
-            0%, 100% {
+          // Crear elemento para el marcador de ubicación del usuario
+          const el = document.createElement('div')
+          el.style.width = '40px'
+          el.style.height = '40px'
+          el.style.display = 'flex'
+          el.style.alignItems = 'center'
+          el.style.justifyContent = 'center'
+          
+          el.innerHTML = `
+            <div style="
+              width: 40px;
+              height: 40px;
+              border-radius: 50%;
+              background: linear-gradient(135deg, #00FFFF 0%, #0099FF 100%);
+              border: 4px solid white;
               box-shadow: 
                 0 0 0 4px rgba(0, 255, 255, 0.3),
                 0 0 20px rgba(0, 255, 255, 0.6),
                 0 4px 10px rgba(0, 0, 0, 0.4);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              animation: pulse 2s infinite;
+            ">
+              <div style="
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background: white;
+                box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+              "></div>
+            </div>
+          `
+
+          // Agregar animación de pulso
+          const style = document.createElement('style')
+          style.textContent = `
+            @keyframes pulse {
+              0%, 100% {
+                box-shadow: 
+                  0 0 0 4px rgba(0, 255, 255, 0.3),
+                  0 0 20px rgba(0, 255, 255, 0.6),
+                  0 4px 10px rgba(0, 0, 0, 0.4);
+              }
+              50% {
+                box-shadow: 
+                  0 0 0 8px rgba(0, 255, 255, 0.2),
+                  0 0 30px rgba(0, 255, 255, 0.8),
+                  0 4px 10px rgba(0, 0, 0, 0.4);
+              }
             }
-            50% {
-              box-shadow: 
-                0 0 0 8px rgba(0, 255, 255, 0.2),
-                0 0 30px rgba(0, 255, 255, 0.8),
-                0 4px 10px rgba(0, 0, 0, 0.4);
-            }
-          }
+          `
+          document.head.appendChild(style)
+
+          // Crear y añadir el marcador
+          const marker = new maplibregl.Marker({ 
+            element: el,
+            anchor: 'center'
+          })
+            .setLngLat([longitude, latitude])
+            .addTo(map)
           
-          @keyframes pulseRing {
-            0% { 
-              opacity: .9; 
-              transform: scale(.6); 
-            }
-            70% { 
-              opacity: .1; 
-              transform: scale(1.6); 
-            }
-            100% { 
-              opacity: 0; 
-              transform: scale(2); 
-            }
-          }
-        `
-        document.head.appendChild(style)
+          userLocationMarkerRef.current = marker
 
-        // Crear y añadir el marcador
-        const marker = new maplibregl.Marker({ 
-          element: el,
-          anchor: 'center'
-        })
-          .setLngLat([longitude, latitude])
-          .addTo(map)
-        
-        userLocationMarkerRef.current = marker
-
-        // Centrar el mapa en la ubicación
-        map.flyTo({
-          center: [longitude, latitude],
-          zoom: 15,
-          duration: 1500
-        })
+          // Centrar el mapa en la ubicación
+          map.flyTo({
+            center: [longitude, latitude],
+            zoom: 15,
+            duration: 1500
+          })
+        }
+        setIsLocating(false)
+      },
+      (error) => {
+        console.error('Error obteniendo ubicación:', error)
+        alert('No se pudo obtener tu ubicación. Por favor, verifica los permisos.')
+        setIsLocating(false)
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0
       }
-      setIsLocating(false)
-    } catch (error) {
-      console.error('Error obteniendo ubicación:', error)
-      alert('No se pudo obtener tu ubicación. Por favor, verifica los permisos.')
-      setIsLocating(false)
-    }
+    )
   }
   
   // Añadir marcadores cuando el mapa esté listo
@@ -284,7 +260,7 @@ const Map = forwardRef<any, MapProps>(({ venues, onVenueClick, selectedVenueId, 
         innerContainer.style.transition = 'transform 0.3s ease'
         innerContainer.style.willChange = 'transform'
         
-        // Pin estilo premium con base luminosa y halo suave
+        // Pin estilo premium con base luminosa y halo suave (sin número)
         innerContainer.innerHTML = `
           <div class="marker-live" style="
             position: relative;
@@ -327,20 +303,6 @@ const Map = forwardRef<any, MapProps>(({ venues, onVenueClick, selectedVenueId, 
               z-index: 2;
               overflow: hidden;
             ">
-              <!-- Número dentro del pin -->
-              <div style="
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%) rotate(45deg);
-                font-size: 16px;
-                font-weight: 800;
-                letter-spacing: 0.03em;
-                color: #ffffff;
-                text-shadow: 
-                  0 0 6px rgba(0, 0, 0, 0.8),
-                  0 2px 6px rgba(0, 0, 0, 0.9);
-              ">${count > 0 ? count : ''}</div>
             </div>
 
             <!-- Base circular luminosa bajo el pin -->
@@ -361,18 +323,18 @@ const Map = forwardRef<any, MapProps>(({ venues, onVenueClick, selectedVenueId, 
         
         el.appendChild(innerContainer)
         
-        // Añadir evento de hover
+        // Añadir evento de hover (ligera ampliación visual del pin)
         el.addEventListener('mouseenter', () => {
-          const circle = innerContainer.querySelector('.marker-circle') as HTMLElement
-          if (circle) {
-            circle.style.borderWidth = '6px'
+          const pin = innerContainer.querySelector('.marker-pin') as HTMLElement
+          if (pin) {
+            pin.style.boxShadow = `0 0 24px ${glowColor}, 0 0 48px ${glowColor}, 0 8px 18px rgba(0,0,0,0.6)`
           }
         })
         
         el.addEventListener('mouseleave', () => {
-          const circle = innerContainer.querySelector('.marker-circle') as HTMLElement
-          if (circle) {
-            circle.style.borderWidth = '3px'
+          const pin = innerContainer.querySelector('.marker-pin') as HTMLElement
+          if (pin) {
+            pin.style.boxShadow = `0 0 18px ${glowColor}, 0 0 36px ${glowColor}, 0 6px 14px rgba(0,0,0,0.5)`
           }
         })
         

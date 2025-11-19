@@ -30,7 +30,6 @@ import useSwipe from '@/hooks/useSwipe'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { MapPin, Edit, Home as HomeIcon, Search as SearchIcon, User as UserIcon, MessageCircle } from 'lucide-react'
 import { addPoints, PointAction } from '@/lib/points-system'
-import { createActivity } from '@/lib/api/activity'
 
 interface SelectedCity {
   name: string
@@ -213,12 +212,17 @@ export default function Home() {
         console.error('Error adding points:', error)
       }
       
-      // Crear actividad en el feed usando la API client-side (compatible con app)
+      // Crear actividad en el feed
       try {
-        const created = await createActivity(user.id, venueId, 'ticket_used')
-        if (!created) {
-          console.error('Error creating activity: createActivity devolvió false')
-        }
+        await fetch('/api/activity', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: user.id,
+            venue_id: venueId,
+            type: 'ticket_used'
+          })
+        })
       } catch (error) {
         console.error('Error creating activity:', error)
       }
