@@ -110,7 +110,7 @@ export default function CompleteProfileModal({
     if (birthDate) {
       const validation = validateBirthDate(birthDate)
       if (!validation.isValid) {
-        toast.error(validation.error)
+        toast.error(validation.error || 'Fecha de nacimiento inválida')
         return
       }
     }

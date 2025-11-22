@@ -18,6 +18,8 @@ import QRScanner from './QRScanner'
 import { getUserPoints, getLevelFromPoints } from '@/lib/points-system'
 import CompleteProfileModal from './CompleteProfileModal'
 import OnboardingFlow from './OnboardingFlow'
+import ReferralCard from './ReferralCard'
+import BadgesShowcase from './BadgesShowcase'
 
 interface ProfileScreenV2Props {
   user: User
@@ -424,6 +426,12 @@ export default function ProfileScreenV2({
             <p className="text-text-secondary text-xs">Nivel</p>
           </div>
         </div>
+
+        {/* Sistema de Referidos */}
+        <ReferralCard userId={user.id} />
+
+        {/* Badges y Logros */}
+        <BadgesShowcase userId={user.id} variant="compact" />
 
         {/* QR Scanner Button */}
         <button
